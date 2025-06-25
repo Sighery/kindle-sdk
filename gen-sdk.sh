@@ -11,20 +11,23 @@ RM_If_Exists() {
 Setup_SDK() {
     tc_target="$1"
     sdk_target="$2"
-    FIRM_URL="$3"    
+    FIRM_URL="$3"
     if [[ -z $tc_dir ]]; then
         tc_dir="$HOME/x-tools/$tc_target"
     fi
-    
+
     sysroot_dir="$tc_dir/$tc_target/sysroot"
 
     # Just in case
     set +e
     sudo umount "./cache/${tc_target}/firmware/mnt"
     set -e
-    
+
     case $sdk_target in
         kindlehf)
+            arch="armhf"
+            ;;
+        scribe1)
             arch="armhf"
             ;;
         *)
@@ -87,7 +90,7 @@ Setup_SDK() {
     else
         echo "Found firmware in cache - SKIPPING!"
     fi
-    
+
     echo "[*] Building Latest KindleTool"
     cd KindleTool/
         make
@@ -229,6 +232,7 @@ Supported platforms:
 
 	kindlepw2
 	kindlehf
+	scribe1
 
 If used, [path] should point to your installed toolchain, ie: '~/x-tools/arm-kindlehf-linux-gnueabihf'
 "
@@ -250,6 +254,9 @@ case $1 in
 		;;
 	kindlehf)
 		Setup_SDK "arm-kindlehf-linux-gnueabihf" "kindlehf" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_all_new_paperwhite_v2_5.16.3.bin"
+		;;
+	scribe1)
+		Setup_SDK "arm-kindlehf-linux-gnueabihf" "scribe1" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_scribe_5.16.3.bin"
 		;;
     kindlepw4)
         Setup_SDK "arm-kindlepw4-linux-gnueabi" "kindlepw2" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_all_new_paperwhite_v2_5.10.1.2.bin"
