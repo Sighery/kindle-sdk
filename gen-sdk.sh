@@ -19,9 +19,12 @@ Setup_SDK() {
     set +e
     sudo umount "./cache/${tc_target}/firmware/mnt"
     set -e
-    
+
     case $sdk_target in
         kindlehf)
+            arch="armhf"
+            ;;
+        scribe1)
             arch="armhf"
             ;;
         *)
@@ -84,7 +87,7 @@ Setup_SDK() {
     else
         echo "Found firmware in cache - SKIPPING!"
     fi
-    
+
     echo "[*] Building Latest KindleTool"
     cd KindleTool/
         make
@@ -220,6 +223,7 @@ Supported platforms:
 
 	kindlepw2
 	kindlehf
+	scribe1
 "
 
 if [ $# -lt 1 ]; then
@@ -235,6 +239,9 @@ case $1 in
 		;;
 	kindlehf)
 		Setup_SDK "arm-kindlehf-linux-gnueabihf" "kindlehf" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_all_new_paperwhite_v2_5.16.3.bin"
+		;;
+	scribe1)
+		Setup_SDK "arm-kindlehf-linux-gnueabihf" "scribe1" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_scribe_5.16.3.bin"
 		;;
     kindlepw4)
         Setup_SDK "arm-kindlepw4-linux-gnueabi" "kindlepw2" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_all_new_paperwhite_v2_5.10.1.2.bin"
