@@ -27,9 +27,6 @@ Setup_SDK() {
         kindlehf)
             arch="armhf"
             ;;
-        scribe1)
-            arch="armhf"
-            ;;
         *)
             arch="armel"
             ;;
@@ -256,7 +253,7 @@ case $1 in
 		Setup_SDK "arm-kindlehf-linux-gnueabihf" "kindlehf" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_all_new_paperwhite_v2_5.16.3.bin"
 		;;
 	scribe1)
-		Setup_SDK "arm-kindlehf-linux-gnueabihf" "scribe1" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_scribe_5.17.2.bin"
+		Setup_SDK "arm-kindlehf-linux-gnueabihf" "kindlehf" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_scribe_5.17.2.bin"
 		;;
     kindlepw4)
         Setup_SDK "arm-kindlepw4-linux-gnueabi" "kindlepw2" "https://s3.amazonaws.com/firmwaredownloads/update_kindle_all_new_paperwhite_v2_5.10.1.2.bin"
