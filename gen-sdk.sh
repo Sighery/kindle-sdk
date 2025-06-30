@@ -223,21 +223,44 @@ cd $(dirname "$0")
 HELP_MSG="
 kindle-sdk - The Unofficial Kindle SDK
 
+There are two modes: simple or expert.
+
+Simple mode
 usage: $0 <platform> [path]
 
 Supported platforms:
 
-	kindlepw2
 	kindlehf
+	kindlepw4
+	kindlepw2
 	scribe1
 
 If used, [path] should point to your installed toolchain, ie: '~/x-tools/arm-kindlehf-linux-gnueabihf'
+
+Expert mode
+usage: $0 expert <toolchain> <platform> <firmware_url> [path]
 "
 
 if [ $# -lt 1 ]; then
 	echo "Missing argument"
 	echo "${HELP_MSG}"
 	exit 1
+fi
+
+if [ $1 = "expert" ]; then
+    echo "in expert mode"
+    if [ $# -lt 4 ]; then
+        echo "Missing arguments"
+        echo "${HELP_MSG}"
+        exit 1
+    fi
+
+    if [ $# -gt 4 ]; then
+        tc_dir=$5
+    fi
+
+    Setup_SDK "$2" "$3" "$4"
+    exit 0
 fi
 
 if [ $# -gt 1 ]; then
