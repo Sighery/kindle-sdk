@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=/usr
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: ace_osal
+Description: ACE OSAL memory allocation APIs
+Version: 1
+Libs: -L${libdir} -lace_osal
+Cflags: -I${includedir}
