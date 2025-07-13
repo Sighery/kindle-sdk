@@ -1,0 +1,91 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - "*-*"
+
+permissions:
+  contents: write
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Setup Koxtoolchain
+        env:
+          RELEASE_BASE: 'https://github.com/koreader/koxtoolchain/releases/download/2025.05/'
+        run: |
+          wget -nv "$RELEASE_BASE/kindlehf.tar.gz" "$RELEASE_BASE/kindlepw2.tar.gz" "$RELEASE_BASE/kindle.tar.gz" "$RELEASE_BASE/kindle5.tar.gz"
+          for pack in "kindlehf" "kindlepw2" "kindle" "kindle5"; do sudo tar -xzf "$pack.tar.gz" -C /usr/local/; done
+
+      - name: Setup Kindle-SDK
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          sudo apt-get -qq update -y
+          sudo apt-get -qq install -y libarchive-dev nettle-dev unzip
+
+          IFS="-" read DEVICE VERSION <<< "$TAG_NAME"
+          source helpers.sh
+          toolchain=$(Kindle_Toolchain $DEVICE $VERSION)
+          platform=$(Kindle_Platform $DEVICE $VERSION)
+          firmware_url=$(Kindle_Firmware_URL $DEVICE $VERSION)
+
+          sudo ./gen-sdk.sh expert $toolchain $platform $firmware_url "/usr/local/x-tools/$toolchain"
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to Github Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: /usr/local/
+          file: ./Dockerfile
+          push: true
+          tags: |
+            sighery/kindle-builder:${{ github.ref_name }}
+            ghcr.io/sighery/kindle-builder:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate artifact attestation DockerHub
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: index.docker.io/sighery/kindle-builder
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Generate artifact attestation GHCR
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/sighery/kindle-builder
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
