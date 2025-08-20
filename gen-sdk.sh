@@ -48,10 +48,10 @@ Setup_SDK() {
     fi
 
     echo "[binaries]" > $tc_dir/meson-crosscompile.txt
-    echo "c = '$tc_dir/bin/$tc_target-gcc'" >> $tc_dir/meson-crosscompile.txt
-    echo "cpp = '$tc_dir/bin/$tc_target-g++'" >> $tc_dir/meson-crosscompile.txt
-    echo "ar = '$tc_dir/bin/$tc_target-ar'" >> $tc_dir/meson-crosscompile.txt
-    echo "strip = '$tc_dir/bin/$tc_target-strip'" >> $tc_dir/meson-crosscompile.txt
+    echo "c = '@DIRNAME@/bin/$tc_target-gcc'" >> $tc_dir/meson-crosscompile.txt
+    echo "cpp = '@DIRNAME@/bin/$tc_target-g++'" >> $tc_dir/meson-crosscompile.txt
+    echo "ar = '@DIRNAME@/bin/$tc_target-ar'" >> $tc_dir/meson-crosscompile.txt
+    echo "strip = '@DIRNAME@/bin/$tc_target-strip'" >> $tc_dir/meson-crosscompile.txt
     echo "pkg-config = 'pkg-config'" >> $tc_dir/meson-crosscompile.txt
     echo "pkgconfig = 'pkg-config'" >> $tc_dir/meson-crosscompile.txt # Yeah ok don't give me that look
     echo "" >> $tc_dir/meson-crosscompile.txt
@@ -64,8 +64,8 @@ Setup_SDK() {
     echo "endian = 'little'" >> $tc_dir/meson-crosscompile.txt
     echo "" >> $tc_dir/meson-crosscompile.txt
     echo "[properties]" >> $tc_dir/meson-crosscompile.txt
-    echo "sys_root = '$tc_dir/$tc_target/sysroot'" >> $tc_dir/meson-crosscompile.txt
-    echo "pkg_config_libdir = '$tc_dir/$tc_target/sysroot/usr/lib/pkgconfig'" >> $tc_dir/meson-crosscompile.txt
+    echo "sys_root = '@DIRNAME@/$tc_target/sysroot'" >> $tc_dir/meson-crosscompile.txt
+    echo "pkg_config_libdir = '@DIRNAME@/$tc_target/sysroot/usr/lib/pkgconfig'" >> $tc_dir/meson-crosscompile.txt
     echo "target='Kindle'" >> $tc_dir/meson-crosscompile.txt
     echo "arch = '$arch'" >> $tc_dir/meson-crosscompile.txt
     chmod -f a-w $tc_dir/meson-crosscompile.txt
