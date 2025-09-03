@@ -3,89 +3,90 @@ name: Build
 on:
   push:
     tags:
-      - "*-*"
+      - "build-*"
 
 permissions:
   contents: write
 
+env:
+  # TODO: Need to figure out a way to autoupdate
+  KOX_RELEASE: "https://github.com/koreader/koxtoolchain/releases/download/2025.05/"
+  KOX_RELEASE_URL: "https://github.com/koreader/koxtoolchain/releases/tag/2025.05"
+
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
+    strategy:
+      fail-fast: true
+      matrix:
+        build:
+          - device: "scribe1"
+            version: "5.17.3"
+          - device: "kindlepw5"
+            version: "5.16.2.1.1"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          submodules: 'recursive'
+          submodules: "recursive"
+
+      - name: Setup env variables
+        run: |
+          source helpers.sh
+          toolchain=$(Kindle_Toolchain ${{ matrix.build.device }} ${{ matrix.build.version }})
+          platform=$(Kindle_Platform ${{ matrix.build.device }} ${{ matrix.build.version }})
+          firmware_url=$(Kindle_Firmware_URL ${{ matrix.build.device }} ${{ matrix.build.version }})
+
+          echo "KSDK_TOOLCHAIN=$toolchain" >> "$GITHUB_ENV"
+          echo "KSDK_PLATFORM=$platform" >> "$GITHUB_ENV"
+          echo "KSDK_FIRMWARE_URL=$firmware_url" >> "$GITHUB_ENV"
+
+          git fetch origin +${{ github.ref }}:${{ github.ref }}
+          subject=$(git tag -l --format='%(contents:subject)' ${{ github.ref_name }})
+          echo "TAG_SUBJECT=$subject" >> "$GITHUB_ENV"
 
       - name: Setup Koxtoolchain
-        env:
-          RELEASE_BASE: 'https://github.com/koreader/koxtoolchain/releases/download/2025.05/'
         run: |
-          wget -nv "$RELEASE_BASE/kindlehf.tar.gz" "$RELEASE_BASE/kindlepw2.tar.gz" "$RELEASE_BASE/kindle.tar.gz" "$RELEASE_BASE/kindle5.tar.gz"
-          for pack in "kindlehf" "kindlepw2" "kindle" "kindle5"; do sudo tar -xzf "$pack.tar.gz" -C /usr/local/; done
+          wget -nv "${KOX_RELEASE}$KSDK_PLATFORM.tar.gz"
+          tar -xzf "$KSDK_PLATFORM.tar.gz" -C .
 
-      - name: Setup Kindle-SDK
-        env:
-          TAG_NAME: ${{ github.ref_name }}
+      - name: Setup Kindle SDK
         run: |
           sudo apt-get -qq update -y
           sudo apt-get -qq install -y libarchive-dev nettle-dev unzip
 
-          IFS="-" read DEVICE VERSION <<< "$TAG_NAME"
-          source helpers.sh
-          toolchain=$(Kindle_Toolchain $DEVICE $VERSION)
-          platform=$(Kindle_Platform $DEVICE $VERSION)
-          firmware_url=$(Kindle_Firmware_URL $DEVICE $VERSION)
+          sudo ./gen-sdk.sh expert $KSDK_TOOLCHAIN $KSDK_PLATFORM $KSDK_FIRMWARE_URL "./x-tools/$KSDK_TOOLCHAIN"
 
-          sudo ./gen-sdk.sh expert $toolchain $platform $firmware_url "/usr/local/x-tools/$toolchain"
+          sudo chown -R $USER ./x-tools
 
-      - name: Log in to DockerHub
-        uses: docker/login-action@v3
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          name: "${{ matrix.build.device }}-${{ matrix.build.version }}"
+          path: "./x-tools/${{ env.KSDK_TOOLCHAIN }}"
 
-      - name: Log in to Github Registry
-        uses: docker/login-action@v3
+      - name: Tar SDK
+        run: tar -czf "${{ matrix.build.device }}-${{ matrix.build.version }}.tar.gz" "./x-tools/$KSDK_TOOLCHAIN"
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+          name: ${{ env.TAG_SUBJECT }}
+          body: |
+            Built with Koxtoolchain release ${{ env.KOX_RELEASE_URL }}
+          files: "${{ matrix.build.device }}-${{ matrix.build.version }}.tar.gz"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  publish-release:
+    runs-on: ubuntu-latest
+    needs: build
 
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@v6
+    steps:
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
         with:
-          context: /usr/local/
-          file: ./Dockerfile
-          push: true
-          tags: |
-            sighery/kindle-builder:${{ github.ref_name }}
-            ghcr.io/sighery/kindle-builder:${{ github.ref_name }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Generate artifact attestation DockerHub
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: index.docker.io/sighery/kindle-builder
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
-
-      - name: Generate artifact attestation GHCR
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ghcr.io/sighery/kindle-builder
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+          draft: false
+          make_latest: true
