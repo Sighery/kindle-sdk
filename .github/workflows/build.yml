@@ -8,11 +8,6 @@ on:
 permissions:
   contents: write
 
-env:
-  # TODO: Need to figure out a way to autoupdate
-  KOX_RELEASE: "https://github.com/koreader/koxtoolchain/releases/download/2025.05/"
-  KOX_RELEASE_URL: "https://github.com/koreader/koxtoolchain/releases/tag/2025.05"
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,6 +29,8 @@ jobs:
           submodules: "recursive"
 
       - name: Setup env variables
+        env:
+          KOX_LATEST: "https://github.com/koreader/koxtoolchain/releases/latest"
         run: |
           source helpers.sh
           toolchain=$(Kindle_Toolchain ${{ matrix.build.device }} ${{ matrix.build.version }})
@@ -44,11 +41,16 @@ jobs:
           echo "KSDK_PLATFORM=$platform" >> "$GITHUB_ENV"
           echo "KSDK_FIRMWARE_URL=$firmware_url" >> "$GITHUB_ENV"
 
+          kox_release=$(curl -Ls -I -o /dev/null -w %{url_effective} $KOX_LATEST)
+          echo "KOX_RELEASE_URL=$kox_release" >> "$GITHUB_ENV"
+
           git fetch origin +${{ github.ref }}:${{ github.ref }}
           subject=$(git tag -l --format='%(contents:subject)' ${{ github.ref_name }})
           echo "TAG_SUBJECT=$subject" >> "$GITHUB_ENV"
 
       - name: Setup Koxtoolchain
+        env:
+          KOX_RELEASE: "https://github.com/koreader/koxtoolchain/releases/latest/download/"
         run: |
           wget -nv "${KOX_RELEASE}$KSDK_PLATFORM.tar.gz"
           tar -xzf "$KSDK_PLATFORM.tar.gz" -C .
