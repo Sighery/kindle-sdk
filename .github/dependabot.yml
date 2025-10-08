@@ -4,6 +4,7 @@ updates:
   - package-ecosystem: "gitsubmodule"
     directories:
       - "/"
-      - "/modules"
+    ignore:
+      - dependency-name: "modules/*"
     schedule:
       interval: "monthly"
