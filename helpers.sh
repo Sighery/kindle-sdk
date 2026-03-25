@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 Kindle_Firmware_URL() {
     device="$1"
