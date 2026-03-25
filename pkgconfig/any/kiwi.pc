@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=/usr
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: kiwi
+Description: Accessibility stack for Kindles
+Version: 1
+Libs: -L${libdir} -lkiwi
+Cflags: -I${includedir}
