@@ -6,3 +6,6 @@ patch/any/usr/include/cJSON_Utils.h
 patch/any/usr/include/cJSON.h
 patch/any/usr/include/lipc.h
 patch/any/usr/include/curl
+
+# Direnv
+/.direnv/
