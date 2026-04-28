@@ -1,6 +1,6 @@
 [submodule "KindleTool"]
 	path = KindleTool
-	url = https://github.com/KindleModding/KindleTool.git
+	url = https://github.com/NiLuJe/KindleTool.git
 [submodule "modules/cJSON"]
 	path = modules/cJSON
 	url = https://github.com/DaveGamble/cJSON.git
