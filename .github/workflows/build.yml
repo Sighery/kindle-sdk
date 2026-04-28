@@ -60,7 +60,10 @@ jobs:
           sudo apt-get -qq update -y
           sudo apt-get -qq install -y libarchive-dev nettle-dev unzip
 
-          sudo ./gen-sdk.sh expert $KSDK_TOOLCHAIN $KSDK_PLATFORM $KSDK_FIRMWARE_URL "./x-tools/$KSDK_TOOLCHAIN"
+          sudo USE_PREBUILT_KINDLETOOL="1" \
+            ./gen-sdk.sh expert \
+            "$KSDK_TOOLCHAIN" "$KSDK_PLATFORM" "$KSDK_FIRMWARE_URL" \
+            "./x-tools/$KSDK_TOOLCHAIN"
 
           sudo chown -R $USER ./x-tools
 
