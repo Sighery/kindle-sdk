@@ -18,8 +18,8 @@ jobs:
         build:
           - device: "scribe1"
             version: "5.17.3"
-          - device: "kindlepw5"
-            version: "5.16.2.1.1"
+          # - device: "kindlepw5"
+          #   version: "5.16.2.1.1"
 
     steps:
       - name: Checkout
@@ -32,6 +32,7 @@ jobs:
         env:
           KOX_LATEST: "https://github.com/koreader/koxtoolchain/releases/latest"
         run: |
+          uname -s -m
           source helpers.sh
           toolchain=$(Kindle_Toolchain ${{ matrix.build.device }} ${{ matrix.build.version }})
           platform=$(Kindle_Platform ${{ matrix.build.device }} ${{ matrix.build.version }})
@@ -60,7 +61,10 @@ jobs:
           sudo apt-get -qq update -y
           sudo apt-get -qq install -y libarchive-dev nettle-dev unzip
 
-          sudo ./gen-sdk.sh expert $KSDK_TOOLCHAIN $KSDK_PLATFORM $KSDK_FIRMWARE_URL "./x-tools/$KSDK_TOOLCHAIN"
+          sudo USE_PREBUILT_KINDLETOOL="1" \
+            ./gen-sdk.sh expert \
+            "$KSDK_TOOLCHAIN" "$KSDK_PLATFORM" "$KSDK_FIRMWARE_URL" \
+            "./x-tools/$KSDK_TOOLCHAIN"
 
           sudo chown -R $USER ./x-tools
 

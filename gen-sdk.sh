@@ -18,6 +18,8 @@ Setup_SDK() {
 
     sysroot_dir="$tc_dir/$tc_target/sysroot"
 
+    kindletool_linux_x86_release="https://github.com/NiLuJe/KindleTool/releases/latest/download/kindletool_linux-x64.tar.gz"
+
     # Just in case
     set +e
     sudo umount "./cache/${tc_target}/firmware/mnt"
@@ -88,10 +90,29 @@ Setup_SDK() {
         echo "Found firmware in cache - SKIPPING!"
     fi
 
-    echo "[*] Building Latest KindleTool"
-    cd KindleTool/
-        make
-    cd ..
+    echo "[*] Setting up KindleTool"
+    if [ ! -d "./cache/KindleTool/" ]; then
+        mkdir -p ./cache/KindleTool
+    fi
+
+    if [ -n "${USE_PREBUILT_KINDLETOOL}" ] &&
+       [ "$(uname -s)" = "Linux" ] &&
+       [ "$(uname -m)" = "x86_64" ]; then
+        if [ -f "KindleTool/KindleTool/Release/kindletool" ]; then
+            echo "Found cached KindleTool binary - SKIPPING!"
+        else
+            echo "[*] Downloading latest $current_system pre-built KindleTool"
+            mkdir -p "KindleTool/KindleTool/Release"
+            curl --progress-bar -L -C - -o "./cache/KindleTool/kindletool.tar.gz" "$kindletool_linux_x86_release"
+            tar -xaf "./cache/KindleTool/kindletool.tar.gz" -C "KindleTool/KindleTool/Release/"
+        fi
+    else
+        echo "[*] Building latest KindleTool"
+        cd KindleTool/
+            make
+        cd ..
+    fi
+
 
     echo "[*] Extracting firmware"
     if [ -d "./cache/${tc_target}/firmware/" ]; then
